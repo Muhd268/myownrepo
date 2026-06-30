@@ -1,29 +1,47 @@
 const express = require('express');
 const app = express();
-const path = require('path');
 
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
-// Mock user session data
+// Placeholder session state until a real login system is connected
 let userSession = {
-    isLoggedIn: true,
+    isLoggedIn: false,
     hasRented: true,
-    name: "Cyclist"
+    name: 'Placeholder Rider'
 };
 
 app.get('/', (req, res) => {
-    res.render('login');
+    res.render('login', { user: userSession });
+});
+
+app.post('/login', (req, res) => {
+    const email = req.body.email || '';
+    const password = req.body.password || '';
+
+    if (email && password) {
+        userSession.isLoggedIn = true;
+        userSession.name = email.split('@')[0] || 'Placeholder Rider';
+        userSession.hasRented = true;
+        res.redirect('/tracker');
+    } else {
+        res.render('login', { user: userSession, error: 'Please enter an email and password.' });
+    }
 });
 
 app.get('/tracker', (req, res) => {
-    // Only allow access if a bike is rented
-    if (userSession.hasRented) {
+    if (userSession.isLoggedIn && userSession.hasRented) {
         res.render('tracker', { user: userSession });
     } else {
         res.redirect('/');
     }
+});
+
+app.get('/logout', (req, res) => {
+    userSession.isLoggedIn = false;
+    userSession.name = 'Placeholder Rider';
+    res.redirect('/');
 });
 
 const PORT = process.env.PORT || 3000;
